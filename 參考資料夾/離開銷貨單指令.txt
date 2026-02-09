@@ -1,0 +1,7 @@
+
+await expect(page.getByText('刪除成功')).toBeVisible({ timeout: 30000 });  
+await page.waitForTimeout(500);
+
+  await page.waitForLoadState('networkidle');
+  // 離開銷貨單頁面
+  await page.getByTestId('DRPSA-exit2-btn').click();

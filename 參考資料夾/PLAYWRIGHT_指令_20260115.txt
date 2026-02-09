@@ -1,0 +1,111 @@
+/*PLAYWRIGHT*/
+/*************************************playwright.config.ts*/---20260115
+/*關於Chrome*/
+{
+      name: 'Google Chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome', storageState: 'playwright/.auth/user.json', viewport: { width: 1500, height: 720 } },
+    },
+
+/**************************************.spec.ts***指令*/
+
+//1.設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
+async function waitAndClick(locator: any, timeout = 30000) {
+  await locator.waitFor({ state: 'visible', timeout });
+  await locator.click();
+}
+
+//2.設定變量:a. 單號 b. 今天日期-TODAY_NOW c. 發票期別 - invymstr
+    let SANO73 = '';
+    let SANO74 = '';
+    let SBNO71 = '';
+    let LONO704 = '';
+    let INVNOXX05 = '';
+    let INVNOXX06 = '';
+    let TODAY = new Date();
+    let YYYY = TODAY.getFullYear().toString().slice(-4);
+    let MM = (TODAY.getMonth() + 1).toString().padStart(2, '0');
+    let DD = TODAY.getDate().toString().padStart(2, '0');
+    let TODAY_NOW: string;
+    TODAY_NOW = `${YYYY}-${MM}-${DD}`;
+    let invmm:number=parseInt(MM)%2===0?parseInt(MM):parseInt(MM)+1;
+    let invymstr:string=invmm<10?`${YYYY}0${invmm.toString()}`:`${YYYY}${invmm.toString()}`;
+
+//3.檢測進入頁面錯誤 - 先等待再檢測  
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('dialog', { name: '進入"銷貨單"頁面時錯誤' })).not.toBeVisible();
+ 
+//4.表頭重要欄位檢測 - 先等待後端處理與畫面更新
+    await page.waitForLoadState('networkidle');
+//4.1 客戶名稱
+    await expect(page.getByTestId('DRPSA-H-CUS_NO')).toHaveValue('B2B 有限公司', { timeout: 15000 });
+//4.2 客戶扣稅類別與立帳方式 ---有些元素不是 input，改用包含或文本檢查
+    await expect(page.getByTestId('DRPSA-H-TAX_ID-input-inner')).toHaveValue('3.應稅外加', { timeout: 15000 });
+    await expect(page.getByTestId('DRPSA-H-ZHANG_ID-input-inner')).toHaveValue('1.單張立帳', { timeout: 15000 });
+
+//5.表身重要欄位檢測 - 先等待後端處理與畫面更新
+
+
+
+
+//6.驗證發票對話框必填欄位（更長 timeout:15000）
+  await waitAndClick(page.getByTestId('INVLZQUERY-發票-btn'));
+    // 1.發票日期
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-INV_DD')).toHaveValue(TODAY_NOW, { timeout: 15000 });
+    // 2.發票期別
+    //console.log('invymstr=',invymstr)
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-INV_YM')).toHaveValue(invymstr, { timeout: 15000 });
+    // 3.買受人統編
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-UNI_NO_BUY')).toHaveValue('87654322', { timeout: 15000 });
+    // 4.買受人抬頭
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-TITLE_BUY')).toHaveValue('B2B 有限公司', { timeout: 15000 });
+    // 5.營業人統編
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-UNI_NO_PAY')).toHaveValue('23724230', { timeout: 15000 });
+    // 6.營業人抬頭
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-TITLE_PAY')).toHaveValue('ATTN Technology Co., Ltd.', { timeout: 15000 });
+    // 7.發票別
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-METH_ID-input-inner')).toHaveValue('', { timeout: 15000 });
+    // 8.扣抵別 
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-TAX_ID2-1-inner')).toHaveValue('1', { timeout: 15000 });
+    // 9.稅別
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-TAX_ID1-1-inner')).toHaveValue('1', { timeout: 15000 });
+    // 10.銷售金額---->檢查金額欄位（以字串為主）
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-AMT')).toHaveValue('75,000', { timeout: 15000 });
+    // 11.稅額
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-TAX')).toHaveValue('3,750', { timeout: 15000 });
+    // 12.合計
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-SUM_AMT')).toHaveValue('78,750', { timeout: 15000 });
+    // 13.防偽隨機碼 (應為 4 碼數字)
+    await expect(page.getByTestId('dialog-INVLZQUERY-H-RAND_NO')).toHaveValue(/^\d{4}$/, { timeout: 15000 });
+
+    // 確定並存變量
+    await waitAndClick(page.getByTestId('dialog-INVLZQUERY-確定-btn'));
+
+
+
+
+
+
+  
+  // 按存檔後,等待成功訊息出現再導航
+  await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
+  // 儲存單號到SANO73
+    SANO73 = await page.getByTestId('DRPSA-H-PS_NO').inputValue();  // 儲存單號到SANO73
+    if (!SANO73) throw new Error('Failed to get SANO73');
+    dataStorage.setValue('SANO73', SANO73); // 存到dataStorage以便其他測試案例使用
+    await page.waitForLoadState('networkidle');
+  // 按關閉,離開銷貨單頁面
+  await page.getByTestId('DRPSA-exit2-btn').click();
+
+
+//点击【确定】动作前可以增加等待时间
+await page.waitForTimeout(2000);
+
+
+
+SB393-銷貨單71-銷項開票701-發票新增修改作廢後刪除檢測
+
+SB393-銷貨單72-銷項開票702&703-發票新增修改作廢後刪除檢測
+
+購買本期39電子發票-XX-第一冊&速設第二、三冊
+
+刪除購買本期39電子發票-XX-第一冊&速設第二、三冊

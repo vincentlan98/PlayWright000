@@ -1,0 +1,55 @@
+{
+  "cookies": [
+    {
+      "name": "sunlikeToken",
+      "value": "7896c57d-53f3-4270-b6c6-287f1d84c545",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "MenuItemIndex",
+      "value": "PurInqManagement",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1796278568,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "MenuItemTitle",
+      "value": "%E4%BE%9B%E6%87%89%E9%8F%88/%E6%8E%A1%E8%B3%BC%E7%AE%A1%E7%90%86",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1796278568,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "RouteItemScroll",
+      "value": "0",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1796278568,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost",
+      "localStorage": [
+        {
+          "name": "userStoreData",
+          "value": "{\"SYS_TYPE\":\"ERP\"}"
+        }
+      ]
+    }
+  ]
+}

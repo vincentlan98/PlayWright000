@@ -1,0 +1,7 @@
+/*PLAYWRIGHT*/
+/*指令*/
+//檢查進入頁面有沒有報錯
+await expect(page.getByRole('dialog', { name: '進入XX單時錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
+
+//点击【确定】动作前可以增加等待时间
+await page.waitForTimeout(2000);
