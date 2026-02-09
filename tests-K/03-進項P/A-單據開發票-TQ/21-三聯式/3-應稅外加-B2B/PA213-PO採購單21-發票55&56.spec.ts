@@ -1,21 +1,13 @@
 import { test, expect } from '@playwright/test';
-import { dataStorage } from '@playwright/test-utils/dataStorage';
-//引入path模組以處理認證與路徑
-import path from 'path';
-// 使用已儲存的認證狀態user.json 放在tests/playwright/.auth/底下
-test.use({ storageState: path.join(__dirname, '../../../../playwright/.auth/user.json') });
 
-
-
+//const BASE = 'http://localhost/sunfusion';
 //設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
+
 async function waitAndClick(locator: any, timeout = 30000) {
   await locator.waitFor({ state: 'visible', timeout });
   await locator.click();
 }
-//PONO21->INVNOTQ55&56新增修改刪除---20260204版
-// 1.playwrightconfig.ts為3個setup project加上testDir限制;
-// 2.認證user.json 指向存放在tests/playwright/.auth/下;
-// 3.刪除初次開啟點擊新增按鍵;
+//PONO21->INVNOTQ55&56新增修改刪除---20260123版
 
 test('PO採購單21-發票TQ55&56新增修改刪除', async ({ page }) => {
   try {
@@ -33,9 +25,10 @@ test('PO採購單21-發票TQ55&56新增修改刪除', async ({ page }) => {
     await page.goto(`#/inv/invpo`);
     await page.waitForLoadState('networkidle');
 //3.檢測進入頁面錯誤  
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('dialog', { name: '進入進貨單時錯誤' })).not.toBeVisible();
-    //await waitAndClick(page.getByTestId('DRPPO-add-btn'));
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('dialog', { name: '進入進貨單時錯誤' })).not.toBeVisible();
+
+    await waitAndClick(page.getByTestId('DRPPO-add-btn'));
     await page.getByTestId('DRPPO-H-OS_DD').press('Enter');
     await page.getByTestId('DRPPO-H-OS_NO').press('Enter');
 

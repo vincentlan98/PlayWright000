@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { dataStorage } from '@playwright/test-utils/dataStorage';
+//引入path模組以處理認證與路徑
+import path from 'path';
+// 使用已儲存的認證狀態user.json 放在tests/playwright/.auth/底下
+test.use({ storageState: path.join(__dirname, '../../../../playwright/.auth/user.json') });
 
 
 //1.設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
@@ -7,7 +11,13 @@ async function waitAndClick(locator: any, timeout = 30000) {
   await locator.waitFor({ state: 'visible', timeout });
   await locator.click();
 }
-//SANOB01->SANOB01_INVNO新增&修改&作廢&刪除---20260120版
+//強制點擊隱藏元素（例如被遮蓋或CSS隱藏的元素）
+async function forceClick(locator: any) {
+  await locator.click({ force: true });
+}
+//SANOB01->SANOB01_INVNO新增&修改&作廢&刪除---20260204版
+// 1.playwrightconfig.ts為3個setup project加上testDir限制;
+// 2.認證user.json 指向存放在tests/playwright/.auth/下;
 
 test('銷貨單-SANOB01-發票新增修改作廢後刪除', async ({ page }) => {
   try {
@@ -28,7 +38,6 @@ test('銷貨單-SANOB01-發票新增修改作廢後刪除', async ({ page }) => 
 //3.檢測進入頁面錯誤  
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('dialog', { name: '進入銷貨單頁面時錯誤' })).not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-add-btn'));
   await waitAndClick(page.getByTestId('DRPSA-H-PS_DD'));
   await page.getByTestId('DRPSA-H-PS_DD').press('Enter');
   await page.getByTestId('DRPSA-H-PS_NO').press('Enter');
@@ -153,10 +162,20 @@ test('銷貨單-SANOB01-發票新增修改作廢後刪除', async ({ page }) => 
   await page.waitForTimeout(1000);
   await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
   await waitAndClick(page.getByTestId('DRPSA-tabset').getByTestId('DRPSA-radio-button-1'));
-    // 指向第二行後再刪除
+  // 指向第二行後再刪除
   await page.waitForLoadState('networkidle');
-  await waitAndClick(page.locator('div').filter({ hasText: /^2$/ }).first());
-  await waitAndClick(page.getByTestId('DRPSA-TF_PSS-B-TABLE_ID-row_1-del-icon-svg'));
+  const row2Locator = page.locator('div').filter({ hasText: /^2$/ }).first();
+  await row2Locator.click();
+  await page.waitForLoadState('networkidle');
+  
+  // 懸停到該行以顯示刪除按鈕
+  const delIconLocator = page.getByTestId('DRPSA-TF_PSS-B-TABLE_ID-row_1-del-icon-svg');
+  const rowContainer = delIconLocator.locator('xpath=ancestor::tr');
+  await rowContainer.hover();
+  await page.waitForTimeout(500);
+  
+  // 使用 forceClick 來點擊隱藏的刪除按鈕
+  await delIconLocator.click({ force: true });
   await waitAndClick(page.getByTestId('DRPSA-save-btn'));
   await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
   await page.waitForLoadState('networkidle');
@@ -321,7 +340,10 @@ test('銷貨單-SANOB01-發票新增修改作廢後刪除', async ({ page }) => 
      catch (err) {
     // 截圖與頁面內容以便診斷
     try {
-       await page.screenshot({ path: `error-PA213-${Date.now()}.png`, fullPage: true }); 
+      // Check if page is still valid before taking screenshot
+      if (!page.isClosed()) {
+        await page.screenshot({ path: `error-PA213-${Date.now()}.png`, fullPage: true }); 
+      }
       } catch(e) {}
     console.error('Test failed - saved screenshot (if possible).', err);
     throw err;

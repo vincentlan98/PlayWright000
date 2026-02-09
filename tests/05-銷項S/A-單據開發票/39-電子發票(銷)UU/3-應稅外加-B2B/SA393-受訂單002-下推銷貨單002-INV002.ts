@@ -1,9 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { dataStorage } from '@playwright/test-utils/dataStorage';
-//引入path模組以處理認證與路徑
-import path from 'path';
-// 使用已儲存的認證狀態user.json 放在tests/playwright/.auth/底下
-test.use({ storageState: path.join(__dirname, '../../../../playwright/.auth/user.json') });
 
 
 //1.設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
@@ -11,17 +7,14 @@ async function waitAndClick(locator: any, timeout = 30000) {
   await locator.waitFor({ state: 'visible', timeout });
   await locator.click();
 }
-//SONO001->SANO001_INVNO新增&修改&作廢&刪除---20260204版
-// 1.playwrightconfig.ts為3個setup project加上testDir限制;
-// 2.認證user.json 指向存放在tests/playwright/.auth/下;
-// 3.刪除初次開啟點擊新增按鍵;
+//SONO001->SANO001_INVNO新增&修改&作廢&刪除---20260123版
 //4A.表頭各欄位檢測含搜尋欄位(受訂單&銷貨單);
 //4AA1.表頭重要欄位值檢測-客戶名稱、備註顯示簡繁字體、扣稅類別與立帳方式(受訂單&銷貨單);
 //4B.檢測表身欄位含搜尋欄位、批號、單位、包裝單位、摘要顯示簡繁字體(受訂單&銷貨單);  
 //檢測存檔後列次序是否變更,新增插入表身第二列存檔後比對(修改受訂單);
 
 
-test('SA393-受訂單001-轉入銷貨單001-INV001', async ({ page }) => {
+test('SA393-受訂單002-下推銷貨單002-INV002', async ({ page }) => {
   try {
 //2.設定變量:a. 單號 b. 今天日期-TODAY_NOW c. 發票期別 - invymstr
     let SONO001 = '';
@@ -42,6 +35,7 @@ test('SA393-受訂單001-轉入銷貨單001-INV001', async ({ page }) => {
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('dialog', { name: '進入受訂單頁面時錯誤' })).not.toBeVisible();
   //表頭欄位填寫&檢測含搜尋欄位(關閉搜尋視窗)
+  await waitAndClick(page.getByTestId('DRPSO-add-btn'));
   await waitAndClick(page.getByTestId('DRPSO-H-OS_DD'));
   await waitAndClick(page.getByTestId('DRPSO-H-OS_DD-icon-svg'));
   //4A01.檢測表頭日期進入頁面錯誤  
@@ -227,43 +221,6 @@ await page.waitForLoadState('networkidle');
   await page.getByTestId('DRPSO-exit2-btn').click();
 
 
-  //***************************************修改受訂單-新增表身第二列品號,檢測存檔後列次序是否變更***********************************************
-  await page.goto(`#/inv/invso/${SONO001}`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入受訂單頁面沒有報錯').not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSO-invso_tab2').getByTestId('DRPSO-radio-button-1'));
-  await waitAndClick(page.locator('div').filter({ hasText: /^2$/ }).nth(2));
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-TABLE_ID-row_1-add-icon-svg'));
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-PRD_NO-row_1-input'));
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-PRD_NO-row_1-suffix-icon-svg'));
-  await waitAndClick(page.getByTestId('DRPSO-gridOptions-B-column_0-row_3-checkbox-icon'));
-  await waitAndClick(page.getByTestId('dialog-DRPSO-確定-btn'));
-  await page.getByTestId('DRPSO-TF_POS-B-PRD_NO-row_1-input').press('Enter');
-  // 儲存第二列品號到PRDNO_2_B
-    PRDNO_2_B = await page.getByTestId('DRPSO-TF_POS-B-PRD_NO-row_1-input').inputValue();  
-  if (!PRDNO_2_B) throw new Error('Failed to get PRDNO_2_B');
-  dataStorage.setValue('PRDNO_2_B', PRDNO_2_B); // 存到dataStorage以便其他測試案例使用
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-WH-row_1-input'));
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-WH-row_1-suffix-icon-svg'));
-  await waitAndClick(page.getByTestId('DRPSO-gridOptions-B-column_0-row_4-btn'));
-  await page.getByTestId('DRPSO-TF_POS-B-WH-row_2-input').press('Enter');
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-QTY-row_1-cell-wrapper'));
-  await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-QTY-row_1-cell-wrapper'));
-  await page.getByTestId('DRPSO-TF_POS-B-QTY-row_1-input').fill('2.00');
-  await page.getByTestId('DRPSO-TF_POS-B-QTY-row_1-input').press('Enter');
-  await page.getByTestId('DRPSO-TF_POS-B-UP-row_1-input').fill('25,000.00');
-  await page.getByTestId('DRPSO-TF_POS-B-UP-row_1-input').press('Enter');
-  await waitAndClick(page.getByTestId('DRPSO-save-btn'));
-  await page.waitForLoadState('networkidle');
-  // 等待成功訊息出現再導航
-  await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
-//4-3.表身欄位排列順序檢測 - 先等待後端處理與畫面更新
-    await page.waitForLoadState('networkidle');
-// 比較本次修改受訂單表身第二列的品號是否與存檔後相同
-    // 先點擊第二列的品號欄位輸入框，使其讓Playwright可見再取值跟PRDNO_2_B比較
-    await waitAndClick(page.getByTestId('DRPSO-TF_POS-B-PRD_NO-row_1-cell-wrapper'));
-    await expect(page.getByTestId('DRPSO-TF_POS-B-PRD_NO-row_1-input')).toHaveValue(PRDNO_2_B, { timeout: 15000 });
     await page.waitForLoadState('networkidle');
   // 離開受訂單頁面
   await waitAndClick(page.getByTestId('DRPSO-exit2-btn'));
@@ -273,6 +230,7 @@ await page.waitForLoadState('networkidle');
 //3.檢測進入頁面錯誤  
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('dialog', { name: '進入銷貨單頁面時錯誤' })).not.toBeVisible();
+  await waitAndClick(page.getByTestId('DRPSA-add-btn'));
   await waitAndClick(page.getByTestId('DRPSA-H-PS_DD'));
   await waitAndClick(page.getByTestId('DRPSA-H-PS_DD-icon-svg'));
   //4A01.檢測表頭日期進入頁面錯誤  
@@ -395,239 +353,8 @@ await page.waitForLoadState('networkidle');
   await page.waitForLoadState('networkidle');
   // 離開銷貨單頁面
   await page.getByTestId('DRPSA-exit2-btn').click();
+
   
-
-  //********************************************************修改銷貨單B01*******************新增發票
-  await page.goto(`#/inv/invsa/${SANO001}`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-radio-button-5'));
-  await waitAndClick(page.getByTestId('DRPSA-發票-btn'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-INV_ID-icon-svg'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-INV_ID-option-39-text'));
-    
-  //因確定後才可檢測發票欄位值,且系統發票視窗關閉反應快,故再開啟後檢測
-    await waitAndClick(page.getByTestId('dialog-DRPSA-確定-btn'));
-    await waitAndClick(page.getByTestId('DRPSA-發票-btn'));
-
-   // 等待對話框內欄位就緒，再檢查值
-    await page.getByTestId('dialog-DRPSA-H-INV_DD').waitFor({ state: 'visible', timeout: 15000 });
-
-    // ============驗證發票對話框必填欄位（更長 timeout:15000）
-    // 1.發票日期
-    await expect(page.getByTestId('dialog-DRPSA-H-INV_DD')).toHaveValue(TODAY_NOW, { timeout: 15000 });
-    // 2.發票期別
-    //console.log('invymstr=',invymstr)
-    await expect(page.getByTestId('dialog-DRPSA-H-INV_YM')).toHaveValue(invymstr, { timeout: 15000 });
-    // 3.買受人統編
-    await expect(page.getByTestId('dialog-DRPSA-H-UNI_NO_BUY')).toHaveValue('87654322', { timeout: 15000 });
-    // 4.買受人抬頭
-    await expect(page.getByTestId('dialog-DRPSA-H-TITLE_BUY')).toHaveValue('B2B 有限公司', { timeout: 15000 });
-    // 5.營業人統編
-    await expect(page.getByTestId('dialog-DRPSA-H-UNI_NO_PAY')).toHaveValue('23724230', { timeout: 15000 });
-    // 6.營業人抬頭
-    await expect(page.getByTestId('dialog-DRPSA-H-TITLE_PAY')).toHaveValue('ATTN Technology Co., Ltd.', { timeout: 15000 });
-    // 7.發票別
-    await expect(page.getByTestId('dialog-DRPSA-H-METH_ID-input-inner')).toHaveValue('', { timeout: 15000 });
-    // 8.扣抵別 
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX_ID2-1-inner')).toHaveValue('1', { timeout: 15000 });
-    // 9.稅別
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX_ID1-1-inner')).toHaveValue('1', { timeout: 15000 });
-    // 10.銷售金額---->檢查金額欄位（以字串為主）
-    await expect(page.getByTestId('dialog-DRPSA-H-AMT')).toHaveValue('140,000', { timeout: 15000 });
-    // 11.稅額
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX')).toHaveValue('7,000', { timeout: 15000 });
-    // 12.合計
-    await expect(page.getByTestId('dialog-DRPSA-H-SUM_AMT')).toHaveValue('147,000', { timeout: 15000 });
-    // 13.防偽隨機碼 (應為 4 碼數字)
-    await expect(page.getByTestId('dialog-DRPSA-H-RAND_NO')).toHaveValue(/^\d{4}$/, { timeout: 15000 });
-   
-    // 確定並存檔
-    await page.getByTestId('dialog-DRPSA-確定-btn').waitFor({ state: 'visible', timeout: 15000 });
-    await waitAndClick(page.getByTestId('dialog-DRPSA-確定-btn'));
-    await waitAndClick(page.getByTestId('DRPSA-save-btn'));
-    await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
-    await page.waitForLoadState('networkidle');
-
-  //********************************************************修改銷貨單B01*******************修改表身與發票
-  await page.goto(`#/inv/invsa/${SANO001}`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-tabset').getByTestId('DRPSA-radio-button-1'));
-  // 指向第二行後再刪除
-  await page.waitForLoadState('networkidle');
-  const row2Locator = page.locator('div').filter({ hasText: /^2$/ }).first();
-  await row2Locator.click();
-  await page.waitForLoadState('networkidle');
-  
-  // 懸停到該行以顯示刪除按鈕
-  const delIconLocator = page.getByTestId('DRPSA-TF_PSS-B-TABLE_ID-row_1-del-icon-svg');
-  const rowContainer = delIconLocator.locator('xpath=ancestor::tr');
-  await rowContainer.hover();
-  await page.waitForTimeout(500);
-  
-  // 使用 forceClick 來點擊隱藏的刪除按鈕
-  await delIconLocator.click({ force: true });
-  await waitAndClick(page.getByTestId('DRPSA-save-btn'));
-  await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
-  await page.waitForLoadState('networkidle');
-  await waitAndClick(page.getByTestId('DRPSA-radio-button-5'));
-  await waitAndClick(page.getByTestId('DRPSA-INV_NO_LIST-B-INV_NO-row_0-cell-wrapper').locator('a'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-AMT'));
-  await page.getByTestId('dialog-DRPSA-H-AMT').fill('90,000');
-  await page.getByTestId('dialog-DRPSA-H-AMT').press('Tab');
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-TAX'));
-  await page.getByTestId('dialog-DRPSA-H-TAX').fill('4,500');
-  await page.getByTestId('dialog-DRPSA-H-TAX').press('Tab');
-  await waitAndClick(page.getByTestId('dialog-DRPSA-確定-btn'));
-  await page.getByTestId('DRPSA-發票-btn').click();
-  
-  // 等待對話框內欄位就緒，再檢查值
-    //await page.getByTestId('dialog-DRPSA-H-INV_DD').waitFor({ state: 'visible', timeout: 15000 });
-
-    // ============驗證發票對話框必填欄位（更長 timeout:15000）
-    // 1.發票日期
-    await expect(page.getByTestId('dialog-DRPSA-H-INV_DD')).toHaveValue(TODAY_NOW, { timeout: 15000 });
-    // 2.發票期別
-    //console.log('invymstr=',invymstr)
-    await expect(page.getByTestId('dialog-DRPSA-H-INV_YM')).toHaveValue(invymstr, { timeout: 15000 });
-    // 3.買受人統編
-    await expect(page.getByTestId('dialog-DRPSA-H-UNI_NO_BUY')).toHaveValue('87654322', { timeout: 15000 });
-    // 4.買受人抬頭
-    await expect(page.getByTestId('dialog-DRPSA-H-TITLE_BUY')).toHaveValue('B2B 有限公司', { timeout: 15000 });
-    // 5.營業人統編
-    await expect(page.getByTestId('dialog-DRPSA-H-UNI_NO_PAY')).toHaveValue('23724230', { timeout: 15000 });
-    // 6.營業人抬頭
-    await expect(page.getByTestId('dialog-DRPSA-H-TITLE_PAY')).toHaveValue('ATTN Technology Co., Ltd.', { timeout: 15000 });
-    // 7.發票別
-    await expect(page.getByTestId('dialog-DRPSA-H-METH_ID-input-inner')).toHaveValue('', { timeout: 15000 });
-    // 8.扣抵別 
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX_ID2-1-inner')).toHaveValue('1', { timeout: 15000 });
-    // 9.稅別
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX_ID1-1-inner')).toHaveValue('1', { timeout: 15000 });
-    // 10.銷售金額---->檢查金額欄位（以字串為主）
-    await expect(page.getByTestId('dialog-DRPSA-H-AMT')).toHaveValue('90,000', { timeout: 15000 });
-    // 11.稅額
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX')).toHaveValue('4,500', { timeout: 15000 });
-    // 12.合計
-    await expect(page.getByTestId('dialog-DRPSA-H-SUM_AMT')).toHaveValue('94,500', { timeout: 15000 });
-    // 13.防偽隨機碼 (應為 4 碼數字)
-    await expect(page.getByTestId('dialog-DRPSA-H-RAND_NO')).toHaveValue(/^\d{4}$/, { timeout: 15000 });
-    // 確定並存檔
-    await waitAndClick(page.getByTestId('dialog-DRPSA-確定-btn'));
-    await waitAndClick(page.getByTestId('DRPSA-save-btn'));
-    await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
-    await page.waitForLoadState('networkidle');
-
-  //********************************************************修改銷貨單B01*******************作廢發票
-  await page.goto(`#/inv/invsa/${SANO001}`);
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-tabset').getByTestId('DRPSA-radio-button-1'));
-  await waitAndClick(page.getByTestId('DRPSA-radio-button-5'));
-  await waitAndClick(page.getByTestId('DRPSA-發票-btn'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-作廢-btn'));
-  await waitAndClick(page.locator('div').filter({ hasText: '詢問' }).nth(3));
-  await waitAndClick(page.getByRole('button', { name: '確定' }).nth(1));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-PRJ_NO'));
-  await page.getByTestId('dialog-DRPSA-H-PRJ_NO').press('Enter');
-  await page.getByTestId('dialog-DRPSA-H-PRJ_NO').fill('SAINVCANCEL');
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-CANCEL_REM'));
-  await page.getByTestId('dialog-DRPSA-H-CANCEL_REM').fill('SA01');
-  await waitAndClick(page.getByRole('dialog', { name: '發票作廢畫面' }).getByTestId('dialog-DRPSA-確定-btn'));
-  await waitAndClick(page.getByTestId('DRPSA-save-btn'));
-  await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
- 
-  //********************************************************修改銷貨單B01*******************新增發票
-  await page.goto(`#/inv/invsa/${SANO001}`);
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-radio-button-5'));
-  await waitAndClick(page.getByTestId('DRPSA-發票-btn'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-INV_ID-icon-svg'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-H-INV_ID-option-39-text'));
-  //因確定後才可檢測發票欄位值,且系統發票視窗關閉反應快,故再開啟後檢測
-  await waitAndClick(page.getByTestId('dialog-DRPSA-確定-btn'));
-  await waitAndClick(page.getByTestId('DRPSA-發票-btn'));
-   // 等待對話框內欄位就緒，再檢查值
-    await page.getByTestId('dialog-DRPSA-H-INV_DD').waitFor({ state: 'visible', timeout: 15000 });
-
-    // ============驗證發票對話框必填欄位（更長 timeout:15000）
-    // 1.發票日期
-    await expect(page.getByTestId('dialog-DRPSA-H-INV_DD')).toHaveValue(TODAY_NOW, { timeout: 15000 });
-    // 2.發票期別
-    //console.log('invymstr=',invymstr)
-    await expect(page.getByTestId('dialog-DRPSA-H-INV_YM')).toHaveValue(invymstr, { timeout: 15000 });
-    // 3.買受人統編
-    await expect(page.getByTestId('dialog-DRPSA-H-UNI_NO_BUY')).toHaveValue('87654322', { timeout: 15000 });
-    // 4.買受人抬頭
-    await expect(page.getByTestId('dialog-DRPSA-H-TITLE_BUY')).toHaveValue('B2B 有限公司', { timeout: 15000 });
-    // 5.營業人統編
-    await expect(page.getByTestId('dialog-DRPSA-H-UNI_NO_PAY')).toHaveValue('23724230', { timeout: 15000 });
-    // 6.營業人抬頭
-    await expect(page.getByTestId('dialog-DRPSA-H-TITLE_PAY')).toHaveValue('ATTN Technology Co., Ltd.', { timeout: 15000 });
-    // 7.發票別
-    await expect(page.getByTestId('dialog-DRPSA-H-METH_ID-input-inner')).toHaveValue('', { timeout: 15000 });
-    // 8.扣抵別 
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX_ID2-1-inner')).toHaveValue('1', { timeout: 15000 });
-    // 9.稅別
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX_ID1-1-inner')).toHaveValue('1', { timeout: 15000 });
-    // 10.銷售金額---->檢查金額欄位（以字串為主）
-    await expect(page.getByTestId('dialog-DRPSA-H-AMT')).toHaveValue('90,000', { timeout: 15000 });
-    // 11.稅額
-    await expect(page.getByTestId('dialog-DRPSA-H-TAX')).toHaveValue('4,500', { timeout: 15000 });
-    // 12.合計
-    await expect(page.getByTestId('dialog-DRPSA-H-SUM_AMT')).toHaveValue('94,500', { timeout: 15000 });
-    // 13.防偽隨機碼 (應為 4 碼數字)
-    await expect(page.getByTestId('dialog-DRPSA-H-RAND_NO')).toHaveValue(/^\d{4}$/, { timeout: 15000 });
-
-    INVNO001 = await page.getByTestId('dialog-DRPSA-H-INV_NO').inputValue();  // 儲存發票號碼到INVNO001
-    if (!INVNO001) throw new Error('Failed to get INVNO001');
-    dataStorage.setValue('INVNO001', INVNO001); // 存到dataStorage以便其他測試案例使用  
-
-    // 確定並存檔
-    await page.getByTestId('dialog-DRPSA-確定-btn').waitFor({ state: 'visible', timeout: 15000 });
-    await waitAndClick(page.getByTestId('dialog-DRPSA-確定-btn'));
-    await waitAndClick(page.getByTestId('DRPSA-save-btn'));
-    await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
-    await page.waitForLoadState('networkidle');
-
-  //********************************************************修改銷貨單B01*******************刪除發票
-  await page.goto(`#/inv/invsa/${SANO001}`);
-  await page.waitForTimeout(1000);
-  await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-tabset').getByTestId('DRPSA-radio-button-1'));
-  await waitAndClick(page.getByTestId('DRPSA-radio-button-5'));
-  await waitAndClick(page.getByTestId('DRPSA-發票-btn'));
-  await waitAndClick(page.getByTestId('dialog-DRPSA-刪除-btn'));
-  await waitAndClick(page.locator('div').filter({ hasText: '詢問' }).nth(3));
-  await waitAndClick(page.getByRole('button', { name: '確定' }).nth(1));
-  await waitAndClick(page.getByTestId('DRPSA-save-btn'));
-  await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
-
-  // 導航到詳細頁面
-  await page.waitForLoadState('networkidle');
-  await page.goto(`#/inv/invsa/${SANO001}`);
-  
-  //****************************************************刪除銷貨單B01
-    await page.goto(`#/inv/invsa/${SANO001}`);
-    await page.waitForTimeout(1000);
-    await expect(page.getByRole('dialog', { name: '錯誤' }), '檢測進入頁面沒有報錯').not.toBeVisible();
-    await waitAndClick(page.getByTestId('DRPSA-tabset').getByTestId('DRPSA-radio-button-1'));
-    await waitAndClick(page.getByTestId('DRPSA-delete-btn'));
-    await waitAndClick(page.locator('div').filter({ hasText: '提示' }).nth(3));
-    await waitAndClick(page.getByRole('button', { name: '確定' }));
-    await expect(page.getByText('刪除成功')).toBeVisible({ timeout: 30000 });  
-    await page.waitForTimeout(500);
-
-
-// 離開銷貨單頁面
-  await page.waitForLoadState('networkidle');
-  await waitAndClick(page.getByTestId('DRPSA-exit2-btn'));
-
-
 
    }
      catch (err) {

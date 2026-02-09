@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
 
 /**
  * Read environment variables from file.
@@ -12,8 +13,8 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: '.',
-  testMatch: ['tests/**/*.spec.ts', 'tests-K/**/*.spec.ts'],
+  testDir: './',
+  testMatch: ['tests/**/*.spec.ts', 'tests-K/**/*.spec.ts', 'tests/**/*.setup.ts'],
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -26,7 +27,7 @@ export default defineConfig({
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
-  timeout: 500000,    //设置每个测试用例的超时时间=350s
+  timeout: 500000,    //設置每個測試用例的超時時間=500s
 
   expect: {timeout: 50000},     //設置expect檢測語句的超時時間=50s
 
@@ -42,20 +43,43 @@ export default defineConfig({
 
     testIdAttribute: 'data-testid',   //前端元件都有建立testid,可加以利用
 
-    //全局延时
+    //全局延遲時間
     launchOptions: {
-      slowMo: parseInt(process.env.PLAYWRIGHT_SLOW_MO || '500'), //每个操作增加500ms延时
+      slowMo: parseInt(process.env.PLAYWRIGHT_SLOW_MO || '500'), //每個操作增加500ms延遲
     },
   },
 
   /* Configure projects for major browsers */
   projects: [
-    // Setup project
+    // Setup project01 for tests of SunFusion I1088
     { 
       name: 'setup', 
-      testMatch: /.*\.setup\.ts/,
+      testDir: 'tests',
+      testMatch: ['**/*.setup.ts'],
       use: {
         baseURL: 'http://localhost/SunFusion/',
+      },
+    },
+
+
+
+    // Setup project02 for tests-K of SunFusionK' ADMIN
+    { 
+      name: 'setup-k', 
+      testDir: 'tests-K',
+      testMatch: /.*auth1\.setup\.ts/,
+      use: {
+        baseURL: 'http://192.168.55.117/SunFusionK/',
+      },
+    },
+
+    // Setup project03 for tests-K of SunFusionK' 001
+    { 
+      name: 'setup-k_001', 
+      testDir: 'tests-K',
+      testMatch: /.*auth2\.setup\.ts/,
+      use: {
+        baseURL: 'http://192.168.55.117/SunFusionK/',
       },
     },
 
@@ -65,23 +89,36 @@ export default defineConfig({
         ...devices['Desktop Chrome'], 
         channel: 'chrome', 
         baseURL: 'http://localhost/SunFusion/',
-        storageState: 'playwright/.auth/user.json', 
+        storageState: path.join(process.cwd(), 'tests', 'playwright', '.auth', 'user.json'), 
         viewport: { width: 1500, height: 720 } 
       },
       dependencies: ['setup'],
     },
     
     {
-      name: 'Google Chrome - Other',
+      name: 'Google Chrome - Test-K_001',
       use: { 
         ...devices['Desktop Chrome'], 
         channel: 'chrome', 
-        baseURL: 'http://localhost/SunFusion365K/',
-        storageState: 'playwright/.auth/user-other.json',  // 不同的 auth 檔案
+        baseURL: 'http://192.168.55.117/SunFusion365K/',
+        storageState: path.join(process.cwd(), 'tests-K', 'playwright', '.auth', 'user-k_001.json'),  // tests-K 001專用的 auth 檔案
         viewport: { width: 1500, height: 720 } 
       },
-      dependencies: ['setup'],
+      dependencies: ['setup-k_001'],
     },
+    {
+      name: 'Google Chrome - Tests-K',
+      use: { 
+        ...devices['Desktop Chrome'], 
+        channel: 'chrome', 
+        baseURL: 'http://192.168.55.117/SunFusionK/',
+        storageState: path.join(process.cwd(), 'tests-K', 'playwright', '.auth', 'user-k.json'),  // tests-K ADMIN專用的 auth 檔案
+        viewport: { width: 1500, height: 720 } 
+      },
+      dependencies: ['setup-k'],
+    },
+
+
   ],
 
   /* Run your local dev server before starting the tests */

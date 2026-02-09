@@ -31,7 +31,6 @@ await page.goto('#/inv/invsa');
 //3.檢測進入頁面錯誤  
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('dialog', { name: '進入"銷貨單"頁面時錯誤' })).not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSA-add-btn'));
   await waitAndClick(page.getByTestId('DRPSA-H-PS_DD'));
   await page.getByTestId('DRPSA-H-PS_DD').press('Enter');
   await page.getByTestId('DRPSA-H-PS_NO').press('Enter');
@@ -214,7 +213,6 @@ await page.goto('#/inv/invsb');
 //3.檢測進入頁面錯誤  
   await page.waitForLoadState('networkidle');
   await expect(page.getByRole('dialog', { name: '進入"銷退單"頁面時錯誤' })).not.toBeVisible();
-  await waitAndClick(page.getByTestId('DRPSB-add-btn'));
   await waitAndClick(page.getByTestId('DRPSB-H-PS_DD'));
   await page.getByTestId('DRPSB-H-PS_DD').press('Enter');
   await page.getByTestId('DRPSB-H-PS_NO').press('Enter');

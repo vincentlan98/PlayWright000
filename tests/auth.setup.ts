@@ -1,7 +1,8 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 
-const authFile = path.join(__dirname, '../playwright/.auth/user.json');
+//test.use({ storageState: path.join(__dirname, '../../../../playwright/.auth/user.json') });
+const authFile = path.join(__dirname, '../../../../playwright/.auth/user.json');
 
 setup('authenticate', async ({ page }) => {
   await page.goto('#/login');
@@ -13,9 +14,6 @@ setup('authenticate', async ({ page }) => {
   await page.getByText('帳套選擇').waitFor({ state: 'visible', timeout: 10000 });
   await page.getByText('帳套選擇').click();
   await page.waitForLoadState('networkidle');
-  // 選擇公司別-old
-  //await page.getByText('帳套選擇').click();
-  //await page.getByTestId('default-compno-input-wrapper').click(); 
 
   // 填入使用者名稱
   await page.getByTestId('default-username').fill('I1088');

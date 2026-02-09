@@ -1,10 +1,21 @@
 import { test, expect } from '@playwright/test';
-//1.設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
+//引入path模組以處理認證與路徑
+import path from 'path';
+// 使用已儲存的認證狀態user.json 放在tests/playwright/.auth/底下
+test.use({ storageState: path.join(__dirname, '../../../../playwright/.auth/user.json') });
 
+
+//1.設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
 async function waitAndClick(locator: any, timeout = 30000) {
   await locator.waitFor({ state: 'visible', timeout });
   await locator.click();
 }
+
+
+//BX001->BXINVNO0060&0061新增&修改&檢測發票號碼---20260204版
+// 1.playwrightconfig.ts為3個setup project加上testDir限制;
+// 2.認證user.json 指向存放在tests/playwright/.auth/下;
+
 
 test('購買本期39電子發票-XX-第一冊&速設第二、三冊', async ({ page }) => {
   //說明:新增本期39電子第一冊發票-XX:新增->修改->刪除->再新增,再速設二冊-第二冊、第三冊  

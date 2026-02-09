@@ -1,20 +1,12 @@
-import { test, expect } from '@playwright/test';  
-import { dataStorage } from '@playwright/test-utils/dataStorage';
-//引入path模組以處理認證與路徑
-import path from 'path';
-// 使用已儲存的認證狀態user.json 放在tests/playwright/.auth/底下
-test.use({ storageState: path.join(__dirname, '../../../../playwright/.auth/user.json') });
+import { test, expect } from '@playwright/test';
 
-
+//const BASE = 'http://localhost/sunfusion';
 //設定wait和click時的等待時間,執行時取用,節省重複程式碼,減少因系統執行逾時出現錯誤訊息而失敗
 async function waitAndClick(locator: any, timeout = 15000) {
   await locator.waitFor({ state: 'visible', timeout });
   await locator.click();
 }
-//PO22PC22->INVNOTQ57&58&59新增修改刪除---20260204版
-// 1.playwrightconfig.ts為3個setup project加上testDir限制;
-// 2.認證user.json 指向存放在tests/playwright/.auth/下;
-// 3.刪除初次開啟點擊新增按鍵;
+//PO22PC22->INVNOTQ57&58&59新增修改刪除---20260123版
 
 test('POPC進貨單22採購單22轉入-發票TQ57&58&59新增修改刪除', async ({ page }) => {
   try {
@@ -32,9 +24,10 @@ test('POPC進貨單22採購單22轉入-發票TQ57&58&59新增修改刪除', asyn
     await page.goto(`#/inv/invpo`);
     await page.waitForLoadState('networkidle');
 //3.檢測進入頁面錯誤  
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByRole('dialog', { name: '進入進貨單時錯誤' })).not.toBeVisible();
-    //await waitAndClick(page.getByTestId('DRPPO-add-btn'));
+  await page.waitForLoadState('networkidle');
+  await expect(page.getByRole('dialog', { name: '進入進貨單時錯誤' })).not.toBeVisible();
+
+    await waitAndClick(page.getByTestId('DRPPO-add-btn'));
     await page.getByTestId('DRPPO-H-OS_DD').press('Enter');
     await page.getByTestId('DRPPO-H-OS_NO').press('Enter');
 
@@ -115,13 +108,15 @@ test('POPC進貨單22採購單22轉入-發票TQ57&58&59新增修改刪除', asyn
     await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
     PONO22 = await page.getByTestId('DRPPO-H-OS_NO').inputValue();
 
-
-//****************************************************新增進貨單******************************************************************/
+    // ===== 進貨單-採購單轉入 =====
     await page.goto(`#/inv/invpc`);
     await page.waitForLoadState('networkidle');
+
     await expect(page.getByRole('dialog', { name: '進入進貨單時錯誤' })).not.toBeVisible();
-    //await waitAndClick(page.getByTestId('DRPPC-add-btn'));
-        // 避免 press('Enter') 立即導致狀態改變，改用 Tab 或其他方式
+
+    await waitAndClick(page.getByTestId('DRPPC-add-btn'));
+    
+    // 避免 press('Enter') 立即導致狀態改變，改用 Tab 或其他方式
     const psDD = page.getByTestId('DRPPC-H-PS_DD');
     await psDD.waitFor({ state: 'visible', timeout: 15000 });
     await psDD.press('Tab');
@@ -157,8 +152,8 @@ test('POPC進貨單22採購單22轉入-發票TQ57&58&59新增修改刪除', asyn
     await waitAndClick(page.getByTestId('dialog-DRPPC-確定-btn'));
     await page.waitForLoadState('networkidle');
 
-    //await waitAndClick(page.getByTestId('DRPPC-save-btn'));
-    //await page.waitForLoadState('networkidle');
+    await waitAndClick(page.getByTestId('DRPPC-save-btn'));
+    await page.waitForLoadState('networkidle');
     
     //await page.getByTestId('dialog-DRPPC-確定-btn').waitFor({ state: 'visible', timeout: 15000 });
     //await waitAndClick(page.getByTestId('dialog-DRPPC-確定-btn'));
@@ -195,8 +190,7 @@ test('POPC進貨單22採購單22轉入-發票TQ57&58&59新增修改刪除', asyn
     await waitAndClick(page.getByTestId('DRPPC-save-btn'));
 
     // 等待成功訊息出現再導航
-    await page.waitForLoadState('networkidle');
-    await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 30000 });
+    await expect(page.getByText('存檔成功')).toBeVisible({ timeout: 15000 });
     PCNO22 = await page.getByTestId('DRPPC-H-PS_NO').inputValue();
 
 
